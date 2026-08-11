@@ -3,34 +3,28 @@ import discord
 from discord import app_commands
 from groq import Groq
 
-# Render 환경변수에서 키와 토큰을 가져옵니다.
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
 
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# 클라이언트 클래스 정의 (슬래시 명령어 커맨드트리 포함)
 class MyClient(discord.Client):
     def __init__(self):
-        # 메시지 읽기 권한(Message Content) 활성화
         intents = discord.Intents.default()
         intents.message_content = True
         super().__init__(intents=intents)
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self):
-        # 디스코드에 슬래시 명령어 동기화 (등록)
         await self.tree.sync()
 
 client = MyClient()
 
 @client.event
 async def on_ready():
-    print(f'🤖 {client.user.name} 이 (느낌표 + 슬래시 통합모드)로 켜졌습니다!')
+    print(f'🤖 {client.user.name} 이 켜졌습니다!')
 
-# ==========================================
-# 1️⃣ [!] 느낌표 메세지 방식 (대화 기억 기능 포함)
-# ==========================================
+# 1️⃣ [!] 느낌표 메세지 방식 (대화 기억)
 @client.event
 async def on_message(message):
     if message.author == client.user:
@@ -45,7 +39,6 @@ async def on_message(message):
 
         async with message.channel.typing():
             try:
-                # 최근 메시지 15개를 읽어와 대화 맥락 파악
                 raw_messages = []
                 async for msg in message.channel.history(limit=15):
                     raw_messages.append(msg)
@@ -82,10 +75,8 @@ async def on_message(message):
             except Exception as e:
                 await message.channel.send(f"오류가 발생했습니다: {e}")
 
-# ==========================================
-# 2️⃣ [/도움말] 슬래시 명령어
-# ==========================================
-@client.tree.command(name="도움말", description="그록 AI 봇 사용 방법을 확인합니다.")
+# 2️⃣ [/도움말] 슬래시 명령어 (🔒 나에게만 보이기 설정 적용!)
+@client.tree.command(name="도움말", description="그록 AI 봇 사용 방법을 나에게만 보여줍니다.")
 async def help_command(interaction: discord.Interaction):
     embed = discord.Embed(
         title="🤖 그록 AI 봇 사용 안내",
@@ -104,11 +95,10 @@ async def help_command(interaction: discord.Interaction):
     )
     embed.set_footer(text="스마트한 AI 도우미 그록")
     
-    await interaction.response.send_message(embed=embed)
+    # ephemeral=True 를 넣으면 나한테만 보입니다!
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
-# ==========================================
 # 3️⃣ [/질문] 슬래시 명령어
-# ==========================================
 @client.tree.command(name="질문", description="그록 AI에게 바로 질문합니다.")
 @app_commands.describe(내용="AI에게 물어볼 내용을 입력하세요")
 async def ask_command(interaction: discord.Interaction, 내용: str):
