@@ -2,13 +2,11 @@ import os
 import discord
 from openai import OpenAI
 
-# xAI Grok API 클라이언트 설정 (OpenAI 호환 방식)
 client = OpenAI(
     api_key=os.environ.get("XAI_API_KEY"),
     base_url="https://api.x.ai/v1",
 )
 
-# 디스코드 봇 인텐트 설정
 intents = discord.Intents.default()
 intents.message_content = True
 discord_client = discord.Client(intents=intents)
@@ -16,16 +14,14 @@ discord_client = discord.Client(intents=intents)
 
 @discord_client.event
 async def on_message(message):
-  # 봇 자신이 보낸 메시지는 무시
   if message.author == discord_client.user:
     return
 
-  # '!질문' 명령어로 대화할 때
-  if message.content.startswith("!질문"):
-    user_message = message.content[3:].strip()
+  # 느낌표(!)로 시작하고 바로 뒤에 띄어쓰기가 있는 경우를 처리
+  if message.content.startswith("! "):
+    user_message = message.content[2:].strip()
 
     try:
-      # xAI의 Grok 모델 호출 및 소녀 페르소나 설정
       response = client.chat.completions.create(
           model="grok-beta",
           messages=[
@@ -50,5 +46,4 @@ async def on_message(message):
       await message.channel.send(f"오류가 발생했어요: {e}")
 
 
-# 봇 실행
 discord_client.run(os.environ.get("DISCORD_TOKEN"))
