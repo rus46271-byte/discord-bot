@@ -26,24 +26,7 @@ SYSTEM_PROMPT = (
 )
 
 
-# 1. 새로운 멤버가 서버에 입장했을 때 실행되는 이벤트
-@discord_client.event
-async def on_member_join(member):
-  # 인사를 보낼 채널 이름 (서버에 맞게 수정하세요. 예: "일반", "채팅", "welcome" 등)
-  target_channel_name = "일반"
-
-  for channel in member.guild.text_channels:
-    if channel.name == target_channel_name:
-      # 소녀 말투 컨셉에 맞춰 환영 인사 메시지 구성
-      welcome_message = (
-          f"와, {member.mention}님 환영해요!"
-          " 전 여기 사는 그록이고 뭐든 물어봐 주시면 대답해드릴수 있어요!"
-      )
-      await channel.send(welcome_message)
-      break
-
-
-# 2. 메시지를 받았을 때 실행되는 이벤트
+# 1. 메시지를 받았을 때 실행되는 이벤트
 @discord_client.event
 async def on_message(message):
   # 봇 자신이 보낸 메시지는 무시 (무한 루프 방지)
