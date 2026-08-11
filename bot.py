@@ -3,6 +3,7 @@ import discord
 from discord import app_commands
 from groq import Groq
 
+# Render 환경변수에서 키와 토큰을 가져옵니다.
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
 
@@ -16,15 +17,16 @@ class MyClient(discord.Client):
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self):
+        # 디스코드 서버에 슬래시 명령어 동기화
         await self.tree.sync()
 
 client = MyClient()
 
 @client.event
 async def on_ready():
-    print(f'🤖 {client.user.name} 이 켜졌습니다!')
+    print(f'🤖 {client.user.name} 이 정상적으로 다시 켜졌습니다!')
 
-# 1️⃣ [!] 느낌표 메세지 방식 (대화 기억)
+# 1️⃣ [!] 느낌표 메세지 방식 (대화 기억 기능)
 @client.event
 async def on_message(message):
     if message.author == client.user:
@@ -50,7 +52,7 @@ async def on_message(message):
                         "role": "system", 
                         "content": (
                             "너는 디스코드 채널에서 사용자와 대화하는 친절하고 위트 있는 AI 봇이야. "
-                            "이름은 '그록'이야. 반드시 자연스러운 한국어로 대답하고 이전 대화 기록을 기억해줘."
+                            "이름은 '그록'이야. 반드시 자연스러운 한국어로 대답하고 이전 대화 기록을 잘 기억해줘."
                         )
                     }
                 ]
@@ -75,7 +77,7 @@ async def on_message(message):
             except Exception as e:
                 await message.channel.send(f"오류가 발생했습니다: {e}")
 
-# 2️⃣ [/도움말] 슬래시 명령어 (🔒 나에게만 보이기 설정 적용!)
+# 2️⃣ [/도움말] 비밀 도움말 (나에게만 보임)
 @client.tree.command(name="도움말", description="그록 AI 봇 사용 방법을 나에게만 보여줍니다.")
 async def help_command(interaction: discord.Interaction):
     embed = discord.Embed(
@@ -85,7 +87,7 @@ async def help_command(interaction: discord.Interaction):
     )
     embed.add_field(
         name="1. `!질문` 방식 (대화 맥락 기억 O)",
-        value="`!안녕`, `!내 이름이 뭐라고?` 처럼 앞에 `!`를 붙이고 질문하면 이전 대화를 기억하며 대답합니다.",
+        value="`!안녕`, `!내 이름이 뭐라고?` 처럼 앞에 `!`를 붙이면 이전 대화를 기억하며 대답합니다.",
         inline=False
     )
     embed.add_field(
@@ -95,7 +97,7 @@ async def help_command(interaction: discord.Interaction):
     )
     embed.set_footer(text="스마트한 AI 도우미 그록")
     
-    # ephemeral=True 를 넣으면 나한테만 보입니다!
+    # ephemeral=True 옵션으로 나한테만 보이게 설정!
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 # 3️⃣ [/질문] 슬래시 명령어
