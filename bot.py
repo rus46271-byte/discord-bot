@@ -14,14 +14,14 @@ bot = discord.Client(intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f'🤖 {bot.user.name} 이 대화 기억 모드로 완벽히 켜졌습니다!')
+    print(f'🤖 {bot.user.name} 이 센스 만점 AI 모드로 켜졌습니다!')
 
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
 
-    # 메시지가 '!'로 시작하는지 확인
+    # '!'로 시작하는 질문 처리
     if message.content.startswith('!'):
         user_text = message.content[1:].strip()
         
@@ -31,28 +31,31 @@ async def on_message(message):
 
         async with message.channel.typing():
             try:
-                # 최근 메시지 15개를 읽어옴
+                # 최근 메시지 15개를 읽어와 맥락 파악
                 raw_messages = []
                 async for msg in message.channel.history(limit=15):
                     raw_messages.append(msg)
                 
                 raw_messages.reverse() # 오래된 순서대로 정렬
 
-                # AI 프롬프트 및 대화 기록 구성
+                # 🔥 핵심: AI의 정체성과 규칙을 강력하게 정의
                 messages_for_ai = [
                     {
                         "role": "system", 
-                        "content": "너는 디스코드 AI 도우미야. 반드시 한국어로만 자연스럽고 친절하게 답변해줘. 이전 대화 기록과 맥락을 잘 파악해서 기억해줘."
+                        "content": (
+                            "너는 디스코드 채널에서 사용자와 대화하는 친절하고 위트 있는 AI 봇이야. "
+                            "이름은 '그록'이야. "
+                            "절대로 스타트렉이나 외계인 이야기 같은 엉뚱한 소리를 하지 마. 웃긴 얘기는 해도 됨 "
+                            "반드시 자연스러운 한국어로 답변하고, 이전 대화 맥락과 사용자 이름을 잘 기억해줘."
+                        )
                     }
                 ]
 
                 for msg in raw_messages:
                     if msg.author == bot.user:
-                        # 봇의 이전 답변 추가
                         if msg.content:
                             messages_for_ai.append({"role": "assistant", "content": msg.content})
                     elif msg.content.startswith('!'):
-                        # 사용자의 '!' 질문 추가 (띄어쓰기 보완)
                         query_text = msg.content[1:].strip()
                         if query_text:
                             messages_for_ai.append({"role": "user", "content": query_text})
