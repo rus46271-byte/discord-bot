@@ -1,73 +1,50 @@
 import os
 import discord
-from groq import Groq
+from openai import OpenAI
 
-# Render 환경변수에서 키와 토큰을 가져옵니다.
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
+# xAI Grok API 클라이언트 설정 (OpenAI 호환 방식)
+client = OpenAI(
+    api_key=os.environ.get("XAI_API_KEY"),
+    base_url="https://api.x.ai/v1",
+)
 
-groq_client = Groq(api_key=GROQ_API_KEY)
-
+# 봇 기본 설정
 intents = discord.Intents.default()
 intents.message_content = True
-bot = discord.Client(intents=intents)
+client_discord = discord.Client(intents=intents)
 
-@bot.event
-async def on_ready():
-    print(f'🤖 {bot.user.name} 이 대화 기억 모드로 켜졌습니다!')
 
-@bot.event
+@client_discord.event
 async def on_message(message):
-    # 봇 자신이 보낸 메시지는 무시
-    if message.author == bot.user:
-        return
+  if message.author == client_discord.user:
+    return
 
-    # '!' 로 시작하는 질문만 처리
-    if message.content.startswith('!'):
-        user_text = message.content[1:].strip()
-        
-        if not user_text:
-            await message.channel.send("질문 내용을 입력해 주세요! (예: `!안녕`)")
-            return
+  # 봇을 부르는 명령어 조건 (예: !질문 이나 멘션 등 본인 코드에 맞게 수정)
+  if message.content.startswith("!질문"):
+    user_message = message.content[3:].strip()
 
-        async with message.channel.typing():
-            try:
-                # 1. 해당 채널의 최근 메시지 10개를 불러옵니다.
-                raw_messages = []
-                async for msg in message.channel.history(limit=10):
-                    raw_messages.append(msg)
-                
-                # 과거 메시지부터 순서대로 정리 (오래된 것 -> 최근 것)
-                raw_messages.reverse()
+    try:
+      # xAI의 Grok 모델 호출
+      response = client.chat.completions.create(
+          model="grok-beta",  # xAI의 Grok 모델명
+          messages=[
+              {
+                  "role": "system",
+                  "content": (
+                      "너는 디스코드 봇이야. 항상 자연스럽고 친근한 한국어로만"
+                      " 대답해."
+                  ),
+              },
+              {"role": "user", "content": user_message},
+          ],
+      )
 
-                # 2. AI에게 넘겨줄 대화 기록(messages) 리스트 작성
-                messages_for_ai = [
-                    {
-                        "role": "system", 
-                        "content": "너는 친절하고 재미있는 디스코드 AI 그록이야. 이전 대화 맥락을 잘 기억하고 답변해줘.답변할 때는 절대 이상한 한자를 쓰지 말고, 오직 자연스러운 한국어로만 대답해. 불필요한 단어를 덧붙이지 마. 영어도 가급적 사용하지말고 미소녀처럼 행동해"
-                    }
-                ]
+      answer = response.choices[0].message.content
+      await message.channel.send(answer)
 
-                for msg in raw_messages:
-                    # 봇이 작성한 답변인 경우
-                    if msg.author == bot.user:
-                        messages_for_ai.append({"role": "assistant", "content": msg.content})
-                    # 사용자가 '!' 명령어 형태로 보낸 질문인 경우
-                    elif msg.content.startswith('!'):
-                        clean_content = msg.content[1:].strip()
-                        if clean_content:
-                            messages_for_ai.append({"role": "user", "content": clean_content})
+    except Exception as e:
+      await message.channel.send(f"오류가 발생했습니다: {e}")
 
-                # 3. 누적된 대화 기록 전체를 Groq AI에 전달
-                chat_completion = groq_client.chat.completions.create(
-                    messages=messages_for_ai,
-                    model="llama-3.3-70b-versatile",
-                )
-                
-                answer = chat_completion.choices[0].message.content
-                await message.channel.send(answer)
 
-            except Exception as e:
-                await message.channel.send(f"오류가 발생했습니다: {e}")
-
-bot.run(DISCORD_TOKEN)
+# 토큰은 본인의 디스코드 봇 토큰으로 유지
+client_discord.run(os.environ.get("DISCORD_BOT_TOKEN"))
