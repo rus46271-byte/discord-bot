@@ -1,12 +1,9 @@
 import os
 import discord
-from openai import OpenAI
+from groq import Groq
 
-# xAI Grok API 클라이언트 설정 (OpenAI 호환 방식)
-client = OpenAI(
-    api_key=os.environ.get("XAI_API_KEY"),
-    base_url="https://api.x.ai/v1",
-)
+# Groq 클라이언트 설정 (무료 API 키 사용)
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 # 디스코드 봇 인텐트 설정
 intents = discord.Intents.default()
@@ -25,9 +22,9 @@ async def on_message(message):
     user_message = message.content[1:].strip()
 
     try:
-      # xAI 최신 모델(grok-4.5) 호출 및 소녀 페르소나 설정
+      # Groq의 무료 고성능 모델 호출 및 소녀 페르소나 설정
       response = client.chat.completions.create(
-          model="grok-4.5",
+          model="llama-3.3-70b-versatile",
           messages=[
               {
                   "role": "system",
