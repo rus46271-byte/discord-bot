@@ -36,7 +36,7 @@ async def on_member_join(member):
     if channel.name == target_channel_name:
       # 소녀 말투 컨셉에 맞춰 환영 인사 메시지 구성
       welcome_message = (
-          f"와, {member.mention}님 환영해요! 처음 오셨으면 시간이 걸릴 수 있어요"
+          f"와, {member.mention}님 환영해요!"
           " 전 여기 사는 그록이고 뭐든 물어봐 주시면 대답해드릴수 있어요!"
       )
       await channel.send(welcome_message)
