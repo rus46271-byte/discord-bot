@@ -1,6 +1,5 @@
 import os
 import discord
-from discord import app_commands
 from groq import Groq
 
 # Render 환경변수에서 키와 토큰을 가져옵니다.
@@ -9,29 +8,21 @@ DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
 
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-class MyClient(discord.Client):
-    def __init__(self):
-        intents = discord.Intents.default()
-        intents.message_content = True
-        super().__init__(intents=intents)
-        self.tree = app_commands.CommandTree(self)
+intents = discord.Intents.default()
+intents.message_content = True
+bot = discord.Client(intents=intents)
 
-    async def setup_hook(self):
-        # 디스코드 서버에 슬래시 명령어 동기화
-        await self.tree.sync()
-
-client = MyClient()
-
-@client.event
+@bot.event
 async def on_ready():
-    print(f'🤖 {client.user.name} 이 정상적으로 다시 켜졌습니다!')
+    print(f'🤖 {bot.user.name} 이 대화 기억 모드로 켜졌습니다!')
 
-# 1️⃣ [!] 느낌표 메세지 방식 (대화 기억 기능)
-@client.event
+@bot.event
 async def on_message(message):
-    if message.author == client.user:
+    # 봇 자신이 보낸 메시지는 무시
+    if message.author == bot.user:
         return
 
+    # '!' 로 시작하는 질문만 처리
     if message.content.startswith('!'):
         user_text = message.content[1:].strip()
         
@@ -41,31 +32,33 @@ async def on_message(message):
 
         async with message.channel.typing():
             try:
+                # 1. 해당 채널의 최근 메시지 10개를 불러옵니다.
                 raw_messages = []
-                async for msg in message.channel.history(limit=15):
+                async for msg in message.channel.history(limit=10):
                     raw_messages.append(msg)
                 
+                # 과거 메시지부터 순서대로 정리 (오래된 것 -> 최근 것)
                 raw_messages.reverse()
 
+                # 2. AI에게 넘겨줄 대화 기록(messages) 리스트 작성
                 messages_for_ai = [
                     {
                         "role": "system", 
-                        "content": (
-                            "너는 디스코드 채널에서 사용자와 대화하는 친절하고 위트 있는 AI 봇이야. "
-                            "이름은 '그록'이야. 반드시 자연스러운 한국어로 대답하고 이전 대화 기록을 잘 기억해줘."
-                        )
+                        "content": "너는 재밌는 디스코드 AI 그록이야. 이전 대화 맥락을 잘 기억하고 답변해줘. 답변할 때는 절대 이상한 한자를 쓰지말고, 오직 자연스럽게 한국어로만 대답해. 불필요한 단어를 덧붙히지마."
                     }
                 ]
 
                 for msg in raw_messages:
-                    if msg.author == client.user:
-                        if msg.content:
-                            messages_for_ai.append({"role": "assistant", "content": msg.content})
+                    # 봇이 작성한 답변인 경우
+                    if msg.author == bot.user:
+                        messages_for_ai.append({"role": "assistant", "content": msg.content})
+                    # 사용자가 '!' 명령어 형태로 보낸 질문인 경우
                     elif msg.content.startswith('!'):
-                        query_text = msg.content[1:].strip()
-                        if query_text:
-                            messages_for_ai.append({"role": "user", "content": query_text})
+                        clean_content = msg.content[1:].strip()
+                        if clean_content:
+                            messages_for_ai.append({"role": "user", "content": clean_content})
 
+                # 3. 누적된 대화 기록 전체를 Groq AI에 전달
                 chat_completion = groq_client.chat.completions.create(
                     messages=messages_for_ai,
                     model="llama-3.3-70b-versatile",
@@ -77,47 +70,4 @@ async def on_message(message):
             except Exception as e:
                 await message.channel.send(f"오류가 발생했습니다: {e}")
 
-# 2️⃣ [/도움말] 비밀 도움말 (나에게만 보임)
-@client.tree.command(name="도움말", description="그록 AI 봇 사용 방법을 나에게만 보여줍니다.")
-async def help_command(interaction: discord.Interaction):
-    embed = discord.Embed(
-        title="🤖 그록 AI 봇 사용 안내",
-        description="그록 봇과 대화하는 방법입니다!",
-        color=discord.Color.blue()
-    )
-    embed.add_field(
-        name="1. `!질문` 방식 (대화 맥락 기억 O)",
-        value="`!안녕`, `!내 이름이 뭐라고?` 처럼 앞에 `!`를 붙이면 이전 대화를 기억하며 대답합니다.",
-        inline=False
-    )
-    embed.add_field(
-        name="2. `/질문` 방식",
-        value="`/질문 내용:안녕하세요` 명령어로 일회성 빠른 질문을 보낼 수 있습니다.",
-        inline=False
-    )
-    embed.set_footer(text="스마트한 AI 도우미 그록")
-    
-    # ephemeral=True 옵션으로 나한테만 보이게 설정!
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
-# 3️⃣ [/질문] 슬래시 명령어
-@client.tree.command(name="질문", description="그록 AI에게 바로 질문합니다.")
-@app_commands.describe(내용="AI에게 물어볼 내용을 입력하세요")
-async def ask_command(interaction: discord.Interaction, 내용: str):
-    await interaction.response.defer()
-
-    try:
-        chat_completion = groq_client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": "너는 디스코드 AI 도우미야. 한국어로 친절하게 대답해줘."},
-                {"role": "user", "content": 내용}
-            ],
-            model="llama-3.3-70b-versatile",
-        )
-        answer = chat_completion.choices[0].message.content
-        await interaction.followup.send(answer)
-
-    except Exception as e:
-        await interaction.followup.send(f"오류가 발생했습니다: {e}")
-
-client.run(DISCORD_TOKEN)
+bot.run(DISCORD_TOKEN)
