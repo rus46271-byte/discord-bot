@@ -31,8 +31,8 @@ async def on_message(message):
               {
                   "role": "system",
                   "content": (
-                      "너는 디스코드 봇이야. 항상 자연스럽고 친근한 한국어로만"
-                      " 대답해."
+                      "너는 디스코드에 머무는 봇이야. 항상 자연스럽고 친근한 한국어로만"
+                      " 대답하되 너는 귀여운 10대 소녀야 항상 상냥한 말투에, 귀여운 소녀를 모방해"
                   ),
               },
               {"role": "user", "content": user_message},
