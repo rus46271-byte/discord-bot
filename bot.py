@@ -6,13 +6,13 @@ from groq import Groq
 # Groq 클라이언트 설정 (무료 API 키 사용)
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-# 디스코드 봇 인텐트 설정
+# 디스코드 봇 인텐트 설정 (members 인텐트 추가 필수!)
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True  # 멤버가 서버에 들어오는 것을 감지하기 위해 필요합니다!
 discord_client = discord.Client(intents=intents)
 
 # 채널별 대화 기록을 저장할 딕셔너리
-# 예: { channel_id: [ {"role": "user", "content": "..."}, {"role": "assistant", "content": "..."} ] }
 chat_histories = defaultdict(list)
 
 # 시스템 프롬프트 (외국어/한자/특수문자 방지 및 소녀 말투 강화)
@@ -26,6 +26,24 @@ SYSTEM_PROMPT = (
 )
 
 
+# 1. 새로운 멤버가 서버에 입장했을 때 실행되는 이벤트
+@discord_client.event
+async def on_member_join(member):
+  # 인사를 보낼 채널 이름 (서버에 맞게 수정하세요. 예: "일반", "채팅", "welcome" 등)
+  target_channel_name = "일반"
+
+  for channel in member.guild.text_channels:
+    if channel.name == target_channel_name:
+      # 소녀 말투 컨셉에 맞춰 환영 인사 메시지 구성
+      welcome_message = (
+          f"와, {member.mention}님 환영해요! 처음 오셨으면 시간이 걸릴 수 있어요"
+          " 전 여기 사는 그록이고 뭐든 물어봐 주시면 대답해드릴수 있어요!"
+      )
+      await channel.send(welcome_message)
+      break
+
+
+# 2. 메시지를 받았을 때 실행되는 이벤트
 @discord_client.event
 async def on_message(message):
   # 봇 자신이 보낸 메시지는 무시 (무한 루프 방지)
@@ -38,7 +56,7 @@ async def on_message(message):
     user_message = message.content[1:].strip()
     if not user_message:
       return
-      
+
     channel_id = message.channel.id
 
     try:
@@ -52,7 +70,9 @@ async def on_message(message):
         chat_histories[channel_id] = chat_histories[channel_id][-10:]
 
       # 3. Groq에 보낼 전체 메시지 구성 (시스템 프롬프트 + 누적된 대화 기록)
-      messages_to_send = [{"role": "system", "content": SYSTEM_PROMPT}] + chat_histories[channel_id]
+      messages_to_send = [{"role": "system", "content": SYSTEM_PROMPT}] + chat_histories[
+          channel_id
+      ]
 
       # Groq 무료 고성능 모델 호출
       response = client.chat.completions.create(
