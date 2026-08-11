@@ -23,7 +23,7 @@ async def on_message(message):
 
     try:
       response = client.chat.completions.create(
-          model="grok-beta",
+          model="grok-2",
           messages=[
               {
                   "role": "system",
