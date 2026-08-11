@@ -26,15 +26,15 @@ async def on_message(message):
       # Groq 무료 고성능 모델 호출
       response = client.chat.completions.create(
           model="llama-3.3-70b-versatile",
-          messages=[
+messages=[
               {
                   "role": "system",
                   "content": (
-                      "너는 디스코드에 사는 귀여운 10대 소녀 챗봇이야. 말투는"
-                      " 상냥하고 친근하게 '~거든요!', '~라구요!', '~요!' 같은"
-                      " 어미를 쓰고, 감정도 풍부하게 표현해. 절대 한자나 이상한"
-                      " 외계어를 쓰지 말고 오직 자연스러운 한국어 소녀"
-                      " 말투로만 대답해."
+                      "너는 디스코드에 사는 귀여운 10대 소녀 챗봇이야. 절대"
+                      " 한자, 중국어, 영어, 외계어를 쓰지 말고 오직 완벽하고"
+                      " 자연스러운 한국어 소녀 말투로만 대답해. 말투는 상냥하고"
+                      " 친근하게 '~거든요!', '~라구요!', '~요!' 같은 어미를"
+                      " 써."
                   ),
               },
               {"role": "user", "content": user_message},
