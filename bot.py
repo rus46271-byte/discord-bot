@@ -21,13 +21,13 @@ async def on_message(message):
     return
 
   # 느낌표(!)로 시작하고 뒤에 내용이 있을 때
-  if message.content.startswith("! "):
-    user_message = message.content[2:].strip()
+  if message.content.startswith("!"):
+    user_message = message.content[1:].strip()
 
     try:
-      # xAI의 Grok 모델 호출 (모델명을 grok-2로 수정)
+      # xAI 최신 모델(grok-4.5) 호출 및 소녀 페르소나 설정
       response = client.chat.completions.create(
-          model="grok-2",
+          model="grok-4.5",
           messages=[
               {
                   "role": "system",
