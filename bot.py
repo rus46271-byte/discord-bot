@@ -22,7 +22,7 @@ async def on_message(message):
     user_message = message.content[1:].strip()
 
     try:
-      # Groq의 무료 고성능 모델 호출 및 소녀 페르소나 설정
+      # Groq의 무료 고성능 모델(llama-3.3-70b-versatile) 호출
       response = client.chat.completions.create(
           model="llama-3.3-70b-versatile",
           messages=[
