@@ -8,31 +8,35 @@ client = OpenAI(
     base_url="https://api.x.ai/v1",
 )
 
-# 봇 기본 설정
+# 디스코드 봇 인텐트 설정
 intents = discord.Intents.default()
 intents.message_content = True
-client_discord = discord.Client(intents=intents)
+discord_client = discord.Client(intents=intents)
 
 
-@client_discord.event
+@discord_client.event
 async def on_message(message):
-  if message.author == client_discord.user:
+  # 봇 자신이 보낸 메시지는 무시
+  if message.author == discord_client.user:
     return
 
-  # 봇을 부르는 명령어 조건 (예: !질문 이나 멘션 등 본인 코드에 맞게 수정)
+  # '!질문' 명령어로 대화할 때
   if message.content.startswith("!질문"):
     user_message = message.content[3:].strip()
 
     try:
-      # xAI의 Grok 모델 호출
+      # xAI의 Grok 모델 호출 및 소녀 페르소나 설정
       response = client.chat.completions.create(
-          model="grok-beta",  # xAI의 Grok 모델명
+          model="grok-beta",
           messages=[
               {
                   "role": "system",
                   "content": (
-                      "너는 디스코드에 머무는 봇이야. 항상 자연스럽고 친근한 한국어로만"
-                      " 대답하되 너는 귀여운 10대 소녀야 항상 상냥한 말투에, 귀여운 소녀를 모방해"
+                      "너는 디스코드에 사는 귀여운 10대 소녀 챗봇이야. 말투는"
+                      " 상냥하고 친근하게 '~거든요!', '~라구요!', '~요!' 같은"
+                      " 어미를 쓰고, 감정도 풍부하게 표현해. 절대 한자나 이상한"
+                      " 외계어를 쓰지 말고 오직 자연스러운 한국어 소녀"
+                      " 말투로만 대답해."
                   ),
               },
               {"role": "user", "content": user_message},
@@ -43,8 +47,8 @@ async def on_message(message):
       await message.channel.send(answer)
 
     except Exception as e:
-      await message.channel.send(f"오류가 발생했습니다: {e}")
+      await message.channel.send(f"오류가 발생했어요: {e}")
 
 
-# 토큰은 본인의 디스코드 봇 토큰으로 유지
-client_discord.run(os.environ.get("DISCORD_BOT_TOKEN"))
+# 봇 실행
+discord_client.run(os.environ.get("DISCORD_TOKEN"))
