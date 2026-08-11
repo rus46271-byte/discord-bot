@@ -17,12 +17,13 @@ async def on_message(message):
   if message.author == discord_client.user:
     return
 
-  # 느낌표(!)로 시작하고 뒤에 내용이 있을 때
+  # 느낌표(!)로 시작하기만 하면 뒤에 띄어쓰기 없이도 작동
   if message.content.startswith("!"):
+    # 느낌표 바로 다음 글자부터 내용을 가져옴
     user_message = message.content[1:].strip()
 
     try:
-      # Groq의 무료 고성능 모델(llama-3.3-70b-versatile) 호출
+      # Groq 무료 고성능 모델 호출
       response = client.chat.completions.create(
           model="llama-3.3-70b-versatile",
           messages=[
